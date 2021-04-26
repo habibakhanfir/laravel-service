@@ -1,0 +1,39 @@
+version: '3.3'
+services:
+  php:
+    image: phpintern:latest
+    volumes:
+      - .:/app
+      - /app/vendor
+    command: bash -c "php artisan config:cache | php artisan serve --host 0.0.0.0 | php artisan command:worker"
+    ports:
+      - 8000:8000
+    networks:
+      servicephp:
+        ipv4_address: 10.5.0.5
+    depends_on:
+      - mongodb
+
+  mongodb:
+    image: mongo:latest
+    container_name: mongodbb
+    environment:
+      MONGO_INITDB_DATABASE: project
+      MONGO_INITDB_ROOT_USERNAME: root
+      MONGO_INITDB_ROOT_PASSWORD: root
+    ports:
+      - 27017:27017
+    networks:
+      servicephp:
+        ipv4_address: 10.5.0.6
+    volumes:
+      - ./init-mongo.js:/docker-entrypoint-initdb.d/init-mongo-js:ro
+      - ./storage/database:/data/db
+
+networks:
+  servicephp:
+    driver: bridge
+    ipam:
+      config:
+        - subnet: 10.5.0.0/16
+          gateway: 10.5.0.1
